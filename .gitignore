@@ -39,3 +39,24 @@ coverage/
 *.bak
 *.orig
 *.rej
+
+# Next.js build output
+.next/
+
+# Static exports
+out/
+
+# TypeScript build output
+*.tsbuildinfo
+
+# Next.js cache
+.next/cache/
+
+# Next.js serverless functions
+.next/server/
+
+# Next.js environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
