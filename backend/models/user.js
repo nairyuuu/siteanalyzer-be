@@ -6,12 +6,12 @@ const UserSchema = new mongoose.Schema({
   email: String,
   phone: String,
   address: String,
-  securityQuestions: [
+  securityAnswers: [
     {
-      question: String,
-      answerHash: String
-    }
-  ]
+      questionId: Number, // Reference to predefined question
+      answerHash: String, // Hashed answer
+    },
+  ],
 });
 
 module.exports = mongoose.model('User', UserSchema);
