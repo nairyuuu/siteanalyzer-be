@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { Box, Button, TextField, Typography, Alert } from '@mui/material';
+import { TextField, Button, Box, Alert } from '@mui/material';
 import axios from 'axios';
 
 export default function ResetPassword() {
@@ -9,7 +9,7 @@ export default function ResetPassword() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const router = useRouter();
-  const { token } = router.query; // Assume the reset token is passed as a query parameter
+  const { token } = router.query; // Extract the token from the query parameters
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,32 +17,23 @@ export default function ResetPassword() {
     setSuccess('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError('Passwords do not match');
       return;
     }
 
     try {
       const response = await axios.post('http://localhost:4000/api/auth/reset-password', {
-        token,
+        token, // Send the token to the backend
         password,
       });
       setSuccess(response.data.message);
-      setTimeout(() => router.push('/login'), 3000); // Redirect to login after success
     } catch (err) {
-      setError(err.response?.data?.error || 'An error occurred. Please try again.');
+      setError(err.response?.data?.error || 'An error occurred');
     }
   };
 
   return (
     <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        Reset Password
-      </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
           label="New Password"
@@ -64,14 +55,14 @@ export default function ResetPassword() {
           Reset Password
         </Button>
       </form>
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )}
       {success && (
         <Alert severity="success" sx={{ mt: 2 }}>
           {success}
+        </Alert>
+      )}
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
         </Alert>
       )}
     </Box>
