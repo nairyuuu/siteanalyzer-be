@@ -102,6 +102,16 @@ export default function Login({ toggleTheme, mode }) {
               Login
             </Button>
           </Box>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            align="center"
+            sx={{ mt: 2 }}
+          >
+            <Button href="/forgot-password" variant="text" size="small">
+              Forgot Password?
+            </Button>
+          </Typography>
         </Paper>
 
         {/* Footer */}

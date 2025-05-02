@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import {
@@ -21,16 +21,24 @@ export default function Register({ toggleTheme, mode }) {
     email: '',
     phone: '',
     address: '',
-    securityQuestions: [{ question: '', answer: '' }],
+    securityAnswers: [{ questionId: '', answer: '' }],
   });
+  const [questions, setQuestions] = useState([]);
   const [errors, setErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      const res = await axios.get('http://localhost:4000/api/auth/security-questions');
+      setQuestions(res.data);
+    };
+    fetchQuestions();
+  }, []);
+
   const validateField = (field, value) => {
     const newErrors = { ...errors };
 
-    // Username validation
     if (field === 'username') {
       if (!value.trim()) {
         newErrors.username = 'Username is required';
@@ -39,7 +47,6 @@ export default function Register({ toggleTheme, mode }) {
       }
     }
 
-    // Password validation
     if (field === 'password') {
       if (!value.trim()) {
         newErrors.password = 'Password is required';
@@ -50,7 +57,6 @@ export default function Register({ toggleTheme, mode }) {
       }
     }
 
-    // Email validation
     if (field === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!value.trim()) {
@@ -62,7 +68,6 @@ export default function Register({ toggleTheme, mode }) {
       }
     }
 
-    // Phone validation
     if (field === 'phone') {
       const phoneRegex = /^[0-9]{10,15}$/;
       if (!value.trim()) {
@@ -74,7 +79,6 @@ export default function Register({ toggleTheme, mode }) {
       }
     }
 
-    // Address validation
     if (field === 'address') {
       if (!value.trim()) {
         newErrors.address = 'Address is required';
@@ -89,7 +93,7 @@ export default function Register({ toggleTheme, mode }) {
   const validateSecurityQuestion = (index, field, value) => {
     const newErrors = { ...errors };
 
-    if (field === 'question') {
+    if (field === 'questionId') {
       if (!value.trim()) {
         newErrors[`securityQuestion${index}`] = `Security Question ${index + 1} is required`;
       } else {
@@ -109,19 +113,24 @@ export default function Register({ toggleTheme, mode }) {
   };
 
   const handleRegister = async () => {
-    if (Object.keys(errors).length > 0) {
-      return;
-    }
+  // Check if at least one valid security question is selected
+  const validQuestions = form.securityAnswers.filter(
+    (q) => q.questionId && q.answer.trim()
+  );
+  if (validQuestions.length === 0) {
+    alert('You must select at least one security question and provide an answer.');
+    return;
+  }
 
-    try {
-      await axios.post('http://localhost:4000/api/auth/register', form);
-      alert('Registered! Now log in.');
-      router.push('/login');
-    } catch (error) {
-      console.error('Registration failed:', error);
-      setErrorMessage('Registration failed. Please try again.');
-    }
-  };
+  try {
+    await axios.post('http://localhost:4000/api/auth/register', form);
+    alert('Registered! Now log in.');
+    router.push('/login');
+  } catch (error) {
+    console.error('Registration failed:', error);
+    setErrorMessage('Registration failed. Please try again.');
+  }
+};
 
   const handleFieldChange = (field, value) => {
     setForm({ ...form, [field]: value });
@@ -129,17 +138,26 @@ export default function Register({ toggleTheme, mode }) {
   };
 
   const handleSecurityQuestionChange = (index, field, value) => {
-    const updatedQuestions = [...form.securityQuestions];
+    const updatedQuestions = [...form.securityAnswers];
     updatedQuestions[index][field] = value;
-    setForm({ ...form, securityQuestions: updatedQuestions });
+    setForm({ ...form, securityAnswers: updatedQuestions });
     validateSecurityQuestion(index, field, value);
   };
 
   const addSecurityQuestion = () => {
+    if (form.securityAnswers.length >= 2) {
+      alert('You can only select up to 2 security questions.');
+      return;
+    }
     setForm({
       ...form,
-      securityQuestions: [...form.securityQuestions, { question: '', answer: '' }],
+      securityAnswers: [...form.securityAnswers, { questionId: '', answer: '' }],
     });
+  };
+
+  const removeSecurityQuestion = (index) => {
+    const updatedQuestions = form.securityAnswers.filter((_, i) => i !== index);
+    setForm({ ...form, securityAnswers: updatedQuestions });
   };
 
   return (
@@ -153,14 +171,12 @@ export default function Register({ toggleTheme, mode }) {
           mt: 8,
         }}
       >
-        {/* Theme Toggle Button */}
         <Box sx={{ alignSelf: 'flex-end' }}>
           <IconButton onClick={toggleTheme} color="inherit">
             {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
           </IconButton>
         </Box>
 
-        {/* Application Title */}
         <Typography component="h1" variant="h4" align="center" sx={{ mt: 2 }}>
           SiteAnalyzer
         </Typography>
@@ -174,10 +190,8 @@ export default function Register({ toggleTheme, mode }) {
           Analyze websites with ease. Register to get started.
         </Typography>
 
-        {/* Error Message */}
         {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
-        {/* Registration Form */}
         <Paper elevation={3} sx={{ p: 3, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center">
             Register
@@ -235,20 +249,34 @@ export default function Register({ toggleTheme, mode }) {
               error={!!errors.address}
               helperText={errors.address}
             />
-            {form.securityQuestions.map((q, index) => (
+            {form.securityAnswers.map((q, index) => (
               <Box key={index} sx={{ mt: 2 }}>
                 <TextField
+                  select
                   margin="normal"
                   required
                   fullWidth
                   label={`Security Question ${index + 1}`}
-                  value={q.question}
+                  value={q.questionId}
                   onChange={(e) =>
-                    handleSecurityQuestionChange(index, 'question', e.target.value)
+                    handleSecurityQuestionChange(index, 'questionId', e.target.value)
                   }
-                  error={!!errors[`securityQuestion${index}`]}
-                  helperText={errors[`securityQuestion${index}`]}
-                />
+                  SelectProps={{
+                    native: true,
+                  }}
+                  InputLabelProps={{
+                    shrink: true, // Ensures the label does not overlap
+                  }}
+                >
+                  <option value="" disabled>
+                    Select a question
+                  </option>
+                  {questions.map((question) => (
+                    <option key={question.id} value={question.id}>
+                      {question.question}
+                    </option>
+                  ))}
+                </TextField>
                 <TextField
                   margin="normal"
                   required
@@ -261,6 +289,15 @@ export default function Register({ toggleTheme, mode }) {
                   error={!!errors[`securityAnswer${index}`]}
                   helperText={errors[`securityAnswer${index}`]}
                 />
+                <Button
+                  variant="text"
+                  size="small"
+                  color="error"
+                  onClick={() => removeSecurityQuestion(index)}
+                  sx={{ mt: 1 }}
+                >
+                  Remove
+                </Button>
               </Box>
             ))}
             <Button
@@ -276,13 +313,13 @@ export default function Register({ toggleTheme, mode }) {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
               onClick={handleRegister}
+              disabled={form.securityAnswers.length === 0 || form.securityAnswers.some((q) => !q.questionId || !q.answer.trim())}
             >
               Register
             </Button>
           </Box>
         </Paper>
 
-        {/* Footer */}
         <Typography
           variant="body2"
           color="text.secondary"
