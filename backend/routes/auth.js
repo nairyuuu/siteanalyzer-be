@@ -66,7 +66,16 @@ router.post('/forgot-password', async (req, res) => {
     return res.status(401).json({ error: 'Security answers do not match' });
   }
 
-  res.json({ message: 'Security answers verified. You can now reset your password.' });
+  // Generate a password reset token
+  const resetToken = jwt.sign({ username: user.username }, process.env.SECRET_KEY, {
+    expiresIn: '15m', // Token expires in 15 minutes
+  });
+
+  // Send the token in the response (in a real-world scenario, you would email this token)
+  res.json({
+    message: 'Security answers verified. Use the token to reset your password.',
+    resetToken,
+  });
 });
 
 router.post('/reset-password', async (req, res) => {
@@ -74,7 +83,7 @@ router.post('/reset-password', async (req, res) => {
 
   try {
     // Verify the reset token
-    const decoded = jwt.verify(token, 'secret'); // Replace 'secret' with your JWT secret
+    const decoded = jwt.verify(token, process.env.SECRET_KEY); // Replace 'secret' with your JWT secret
     const user = await User.findOne({ username: decoded.username });
 
     if (!user) {

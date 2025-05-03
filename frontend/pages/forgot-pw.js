@@ -40,7 +40,11 @@ export default function ForgotPassword() {
         username,
         securityAnswers: securityQuestions,
       });
+      const resetToken = response.data.resetToken; // Extract the token from the response
       setMessage(response.data.message);
+
+      // Redirect to the reset-password page with the token
+      window.location.href = `/reset-password?token=${resetToken}`;
     } catch (err) {
       setError(err.response?.data?.error || 'An error occurred');
     }

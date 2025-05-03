@@ -108,7 +108,7 @@ export default function Login({ toggleTheme, mode }) {
             align="center"
             sx={{ mt: 2 }}
           >
-            <Button href="/forgot-password" variant="text" size="small">
+            <Button href="/forgot-pw" variant="text" size="small">
               Forgot Password?
             </Button>
           </Typography>
