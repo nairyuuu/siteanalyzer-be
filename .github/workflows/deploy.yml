@@ -20,7 +20,7 @@ jobs:
 
     - name: Deploy to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_HOST }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no ${{ env.AWS_USERNAME }}@${{ env.AWS_HOST }} << 'EOF'
           # Navigate to the project directory
           cd siteanalyzer-be
 
