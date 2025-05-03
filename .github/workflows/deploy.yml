@@ -22,7 +22,7 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_HOST }} << 'EOF'
           # Navigate to the project directory
-          cd /path/to/your/project
+          cd /siteanalyzer-be
 
           # Pull the latest changes
           git pull origin main
