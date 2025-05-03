@@ -19,9 +19,10 @@ jobs:
         ssh-private-key: ${{ secrets.AWS_SSH_KEY }}
     - name: Debug SSH Connection
       run: |
-          echo "Testing SSH connection..."
-          echo ${{ env.AWS_USERNAME }}
-          echo {{ env.AWS_HOST }}
+        echo "Testing SSH connection..."
+        echo "$AWS_USERNAME"
+        echo "$AWS_HOST"
+
     - name: Deploy to EC2
       run: |
         ssh -o StrictHostKeyChecking=no ${{ env.AWS_USERNAME }}@${{ env.AWS_HOST }} << 'EOF'
