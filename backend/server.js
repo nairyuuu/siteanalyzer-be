@@ -13,6 +13,7 @@ app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/download', require('./routes/download'));
+app.use('/api/version', require('./routes/version'));
 
 const PORT = 4000;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
