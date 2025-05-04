@@ -30,8 +30,24 @@ export default function Register({ toggleTheme, mode }) {
 
   useEffect(() => {
     const fetchQuestions = async () => {
-      const res = await axios.get('http://localhost:4000/api/auth/security-questions');
-      setQuestions(res.data);
+      try {
+        const res = await axios.get('http://localhost:4000/api/auth/security-questions');
+        if (res.data && res.data.length > 0) {
+          setQuestions(res.data);
+        } else {
+          console.warn('No security questions found. Using default questions.');
+          setQuestions([
+            { id: 1, question: 'What is your favorite color?' },
+            { id: 2, question: 'What is your mother’s maiden name?' },
+          ]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch security questions:', error);
+        setQuestions([
+          { id: 1, question: 'What is your favorite color?' },
+          { id: 2, question: 'What is your mother’s maiden name?' },
+        ]);
+      }
     };
     fetchQuestions();
   }, []);
