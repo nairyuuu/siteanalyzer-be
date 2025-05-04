@@ -37,15 +37,19 @@ export default function Register({ toggleTheme, mode }) {
         } else {
           console.warn('No security questions found. Using default questions.');
           setQuestions([
-            { id: 1, question: 'What is your favorite color?' },
-            { id: 2, question: 'What is your mother’s maiden name?' },
+            { id: 1, question: "What is your mother's maiden name?" },
+            { id: 2, question: "What was the name of your first pet?" },
+            { id: 3, question: "What is your favorite book?" },
+            { id: 4, question: "What city were you born in?" },
           ]);
         }
       } catch (error) {
         console.error('Failed to fetch security questions:', error);
         setQuestions([
-          { id: 1, question: 'What is your favorite color?' },
-          { id: 2, question: 'What is your mother’s maiden name?' },
+          { id: 1, question: "What is your mother's maiden name?" },
+          { id: 2, question: "What was the name of your first pet?" },
+          { id: 3, question: "What is your favorite book?" },
+          { id: 4, question: "What city were you born in?" },
         ]);
       }
     };
