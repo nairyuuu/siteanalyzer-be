@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const router = express.Router();
 
-const VERSION_FILE_PATH = path.join(__dirname, '../shared/version.txt');
+const VERSION_FILE_PATH = path.join(__dirname, '/shared/version.txt');
 
 router.get('/', (req, res) => {
   fs.readFile(VERSION_FILE_PATH, 'utf8', (err, data) => {
