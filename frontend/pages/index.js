@@ -20,7 +20,7 @@ export default function Home({ toggleTheme, mode }) {
   };
 
   const downloadFile = async () => {
-    const res = await axios.get('http://localhost:4000/api/download', {
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/download`, {
       headers: { Authorization: `Bearer ${getToken()}` },
       responseType: 'blob',
     });

@@ -20,7 +20,8 @@ export default function Login({ toggleTheme, mode }) {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post('http://localhost:4000/api/auth/login', form);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const res = await axios.post(`${apiUrl}/api/auth/login`, form);
       setToken(res.data.token);
       router.push('/');
     } catch (error) {

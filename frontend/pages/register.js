@@ -31,7 +31,7 @@ export default function Register({ toggleTheme, mode }) {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get('http://localhost:4000/api/auth/security-questions');
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/security-questions`);
         if (res.data && res.data.length > 0) {
           setQuestions(res.data);
         } else {
@@ -143,7 +143,7 @@ export default function Register({ toggleTheme, mode }) {
   }
 
   try {
-    await axios.post('http://localhost:4000/api/auth/register', form);
+    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, form);
     alert('Registered! Now log in.');
     router.push('/login');
   } catch (error) {
