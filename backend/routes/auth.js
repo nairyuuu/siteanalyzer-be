@@ -2,11 +2,11 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
-const securityQuestions = require('../data/securityQuestions');
+const securityQuestions = require('../middleware/data/securityQuestions');
 const router = express.Router(); 
 
 router.post('/register', async (req, res) => {
-  const { username, password, email, phone, address, securityAnswers } = req.body;
+  const { username, password, email, phone, address, role, securityAnswers } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 8);
 
   // Hash the answers
@@ -22,6 +22,7 @@ router.post('/register', async (req, res) => {
       email,
       phone,
       address,
+      role: role || 'user',
       securityAnswers: hashedAnswers,
     });
     await user.save();

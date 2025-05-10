@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
   email: String,
   phone: String,
   address: String,
+  role: { type: String, default: 'user' }, // Add role field
   securityAnswers: [
     {
       questionId: Number, // Reference to predefined question
