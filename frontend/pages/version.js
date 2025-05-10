@@ -7,7 +7,7 @@ export default function Version() {
   useEffect(() => {
     const fetchVersion = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/version');
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/version`);
         setVersion(response.data.version);
       } catch (error) {
         console.error('Error fetching version:', error.message);
