@@ -1,25 +1,43 @@
 const { WebSocketServer } = require('ws');
+const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 const TrafficLog = require('../models/TrafficLog');
 
 let wss; // WebSocket server instance
 
-// Initialize WebSocket server
 function initializeWebSocket(server) {
   wss = new WebSocketServer({ server });
 
-  console.log('WebSocket server initialized');
+  wss.on('connection', async (ws, req) => {
+    const token = req.headers['sec-websocket-protocol'];
 
-  wss.on('connection', (ws) => {
-    console.log('WebSocket connection established');
+    if (!token || typeof token !== 'string') {
+      console.log('WebSocket connection rejected: No token provided or invalid format');
+      ws.close(1008, 'Unauthorized');
+      return;
+    }
 
-    // Send initial logs to the client
-    TrafficLog.find().sort({ timestamp: -1 }).limit(100).then((logs) => {
-      ws.send(JSON.stringify({ type: 'initial', logs }));
-    });
+    try {
+      const decoded = jwt.verify(token, process.env.SECRET_KEY || 'secret');
+      const user = await User.findOne({ username: decoded.username });
 
-    ws.on('close', () => {
-      console.log('WebSocket connection closed');
-    });
+      if (!user || user.role !== 'admin') {
+        console.log('WebSocket connection rejected: Unauthorized user');
+        ws.close(1008, 'Unauthorized');
+        return;
+      }
+
+      TrafficLog.find().sort({ timestamp: -1 }).limit(100).then((logs) => {
+        ws.send(JSON.stringify({ type: 'initial', logs }));
+      });
+
+      ws.on('close', () => {
+        console.log('WebSocket connection closed');
+      });
+    } catch (err) {
+      console.error('WebSocket connection rejected: Invalid token', err.message);
+      ws.close(1008, 'Unauthorized'); 
+    }
   });
 }
 
