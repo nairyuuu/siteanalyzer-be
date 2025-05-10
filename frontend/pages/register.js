@@ -21,6 +21,7 @@ export default function Register({ toggleTheme, mode }) {
     email: '',
     phone: '',
     address: '',
+    role: 'admin',
     securityAnswers: [{ questionId: '', answer: '' }],
   });
   const [questions, setQuestions] = useState([]);
