@@ -1,19 +1,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const app = express();
+const { trafficLogger } = require('./utils/trafficLogger');
+const { initializeWebSocket } = require('./utils/websocket');
+const http = require('http');
 
-mongoose.connect('mongodb://mongo:27017/extensionDB', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+const app = express();
+const server = http.createServer(app);
+
+mongoose.connect('mongodb://mongo:27017/extensionDB');
 
 app.use(cors());
 app.use(express.json());
+app.use(trafficLogger);
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/download', require('./routes/download'));
 app.use('/api/version', require('./routes/version'));
+app.use('/api/dashboard', require('./routes/dashboard'));
+
+initializeWebSocket(server);
 
 const PORT = 4000;
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Backend and WebSocket server running on port ${PORT}`));

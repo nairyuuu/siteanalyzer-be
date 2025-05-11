@@ -5,7 +5,11 @@ const UserSchema = new mongoose.Schema({
   password: String,
   email: String,
   phone: String,
-  address: String
+
+
+  address: String,
+  role: { type: String, default: 'user' }, // Add role field
+  ],
 });
 
 module.exports = mongoose.model('User', UserSchema);
