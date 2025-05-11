@@ -3,17 +3,19 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const { trafficLogger } = require('./utils/trafficLogger');
 const { initializeWebSocket } = require('./utils/websocket');
+const rateLimiter = require('./utils/rateLimit');
 const http = require('http');
 
 const app = express();
 const server = http.createServer(app);
 
-mongoose.connect('mongodb://mongo:27017/extensionDB');
+mongoose.connect('mongodb://localhost:27017/extensionDB');
 
 app.use(cors());
 app.use(express.json());
 app.use(trafficLogger);
 
+app.use("/api", rateLimiter());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/download', require('./routes/download'));
 app.use('/api/version', require('./routes/version'));
