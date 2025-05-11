@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user')
 const nodemailer = require('nodemailer');
-const securityQuestions = require('../data/securityQuestions');
 const validator = require('validator'); // Add validator.js for input validation
 const securityQuestions = require('../middleware/data/securityQuestions')
 const router = express.Router(); 
@@ -47,8 +46,6 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
       email,
       phone,
-
-      address
       address,
       role: role || 'user',
     });
