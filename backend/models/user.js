@@ -5,13 +5,10 @@ const UserSchema = new mongoose.Schema({
   password: String,
   email: String,
   phone: String,
+
+
   address: String,
   role: { type: String, default: 'user' }, // Add role field
-  securityAnswers: [
-    {
-      questionId: Number, // Reference to predefined question
-      answerHash: String, // Hashed answer
-    },
   ],
 });
 
