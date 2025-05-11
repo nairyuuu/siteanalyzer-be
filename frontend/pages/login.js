@@ -16,6 +16,7 @@ import { Brightness4, Brightness7 } from '@mui/icons-material';
 
 export default function Login({ toggleTheme, mode }) {
   const [form, setForm] = useState({ username: '', password: '' });
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -26,7 +27,7 @@ export default function Login({ toggleTheme, mode }) {
       router.push('/');
     } catch (error) {
       console.error('Login failed:', error);
-      // Add error handling here (e.g., show a snackbar or error message)
+      setErrorMessage(error.response?.data?.error || 'An error occurred. Please try again.');
     }
   };
 
@@ -94,6 +95,11 @@ export default function Login({ toggleTheme, mode }) {
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               onKeyPress={handleKeyPress}
             />
+            {errorMessage && (
+              <Typography color="error" variant="body2" align="center" sx={{ mb: 2 }}>
+                {errorMessage}
+              </Typography>
+            )}
             <Button
               fullWidth
               variant="contained"

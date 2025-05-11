@@ -5,13 +5,7 @@ const UserSchema = new mongoose.Schema({
   password: String,
   email: String,
   phone: String,
-  address: String,
-  securityAnswers: [
-    {
-      questionId: Number, // Reference to predefined question
-      answerHash: String, // Hashed answer
-    },
-  ],
+  address: String
 });
 
 module.exports = mongoose.model('User', UserSchema);
