@@ -3,9 +3,9 @@ import { getToken } from '../utils/auth';
 
 export default function Download() {
   const downloadFile = async () => {
-    const res = await axios.get('http://localhost:4000/api/download', {
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/download`, {
       headers: { Authorization: `Bearer ${getToken()}` },
-      responseType: 'blob'
+      responseType: 'blob',
     });
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement('a');
