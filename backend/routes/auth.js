@@ -21,7 +21,7 @@ const transporter = nodemailer.createTransport({
 
 
 router.post('/register', async (req, res) => {
-  const { username, password, email, phone, address } = req.body;
+  const { username, password, email, phone, address, role } = req.body;
 
   // Validate inputs
   if (!validator.isAlphanumeric(username)) {
@@ -37,7 +37,6 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
   }
 
-
   const hashedPassword = bcrypt.hashSync(password, 8);
 
   try {
@@ -47,12 +46,12 @@ router.post('/register', async (req, res) => {
       email,
       phone,
       address,
-      role: role || 'user',
+      role: role || 'user', // Default to 'user' if role is not provided
     });
     await user.save();
     res.json({ message: 'Registered successfully' });
   } catch (err) {
-    res.status(400).json({ error: 'Username already exists' });
+    res.status(400).json({ error: err.message });
   }
 });
 
