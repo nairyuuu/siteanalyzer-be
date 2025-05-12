@@ -16,7 +16,7 @@ export default function ResetPassword() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:4000/api/auth/reset-password', {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
         token,
         password,
       });

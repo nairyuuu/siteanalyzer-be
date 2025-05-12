@@ -13,7 +13,7 @@ export default function ForgotPassword() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:4000/api/auth/forgot-password', {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
         username,
       });
       setMessage(response.data.message); // Backend should return a success message
