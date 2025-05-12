@@ -1,32 +1,26 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
-import { TextField, Button, Box, Alert } from '@mui/material';
+import { TextField, Button, Typography, Box, Alert } from '@mui/material';
 import axios from 'axios';
+import { useRouter } from 'next/router';
 
 export default function ResetPassword() {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const router = useRouter();
-  const { token } = router.query; // Extract the token from the query parameters
+  const { token } = router.query; // Extract token from URL
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage('');
     setError('');
-    setSuccess('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
-        token, // Send the token to the backend
+      const response = await axios.post('http://localhost:4000/api/auth/reset-password', {
+        token,
         password,
       });
-      setSuccess(response.data.message);
+      setMessage(response.data.message);
     } catch (err) {
       setError(err.response?.data?.error || 'An error occurred');
     }
@@ -34,6 +28,9 @@ export default function ResetPassword() {
 
   return (
     <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
+      <Typography variant="h5" gutterBottom>
+        Reset Password
+      </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
           label="New Password"
@@ -43,21 +40,13 @@ export default function ResetPassword() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <TextField
-          label="Confirm Password"
-          type="password"
-          fullWidth
-          margin="normal"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
         <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>
-          Reset Password
+          Submit
         </Button>
       </form>
-      {success && (
+      {message && (
         <Alert severity="success" sx={{ mt: 2 }}>
-          {success}
+          {message}
         </Alert>
       )}
       {error && (

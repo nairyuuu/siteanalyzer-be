@@ -72,27 +72,30 @@ router.post('/login', async (req, res) => {
 
 router.post('/forgot-password', async (req, res) => {
   const { username } = req.body;
-  const user = await User.findOne({ username });
-
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-
-  // Generate a password reset token
-  const resetToken = jwt.sign({ username: user.username }, process.env.SECRET_KEY, {
-    expiresIn: '15m', // Token expires in 15 minutes
-  });
-  console.log('Email User:', process.env.EMAIL_USER);
-  console.log('Email Pass:', process.env.EMAIL_PASS ? 'Loaded' : 'Not Loaded');
-  // Send the token via email
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: user.email,
-    subject: 'Password Reset Request',
-    text: `You requested a password reset. Use the following link to reset your password: ${resetToken}`,
-  };
 
   try {
+    // Find the user by username
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate a password reset token
+    const resetToken = jwt.sign({ username: user.username }, process.env.SECRET_KEY, {
+      expiresIn: '15m', // Token expires in 15 minutes
+    });
+
+    // Construct the password reset link
+    const resetLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    // Send the reset link via email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Password Reset Request',
+      text: `You requested a password reset. Click the link below to reset your password:\n\n${resetLink}\n\nIf you did not request this, please ignore this email.`,
+    };
+
     await transporter.sendMail(mailOptions);
     res.json({ message: 'Password reset email sent. Please check your inbox.' });
   } catch (err) {
@@ -102,25 +105,28 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 router.post('/reset-password', async (req, res) => {
-  const { token, password } = req.body;
+  const { token, newPassword } = req.body;
 
   try {
     // Verify the reset token
-    const decoded = jwt.verify(token, process.env.SECRET_KEY); // Replace 'secret' with your JWT secret
-    const user = await User.findOne({ username: decoded.username });
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
+    // Find the user by username
+    const user = await User.findOne({ username: decoded.username });
     if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     // Hash the new password
-    const hashedPassword = bcrypt.hashSync(password, 8);
+    const hashedPassword = bcrypt.hashSync(newPassword, 8);
+
+    // Update the user's password
     user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: 'Password has been reset successfully.' });
+    res.json({ message: 'Password reset successfully.' });
   } catch (err) {
-    console.error(err);
+    console.error('Error resetting password:', err);
     res.status(400).json({ error: 'Invalid or expired token.' });
   }
 });
