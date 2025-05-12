@@ -1,3 +1,4 @@
+require('dotenv').config(); // Ensure environment variables are loaded
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -10,9 +11,18 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 
+// Load the allowed origin from the environment variable
+const allowedOrigin = `http://${process.env.NEXT_PUBLIC_API_URL}`;
+
+// Configure CORS
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true, // Allow cookies and credentials
+}));
+
 mongoose.connect('mongodb://mongo:27017/extensionDB');
 
-app.use(cors());
 app.use(express.json());
 app.use(helmet());
 app.use(trafficLogger);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import {
@@ -21,41 +21,10 @@ export default function Register({ toggleTheme, mode }) {
     email: '',
     phone: '',
     address: '',
-    role: 'admin',
-    securityAnswers: [{ questionId: '', answer: '' }],
   });
-  const [questions, setQuestions] = useState([]);
   const [errors, setErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/security-questions`);
-        if (res.data && res.data.length > 0) {
-          setQuestions(res.data);
-        } else {
-          console.warn('No security questions found. Using default questions.');
-          setQuestions([
-            { id: 1, question: "What is your mother's maiden name?" },
-            { id: 2, question: "What was the name of your first pet?" },
-            { id: 3, question: "What is your favorite book?" },
-            { id: 4, question: "What city were you born in?" },
-          ]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch security questions:', error);
-        setQuestions([
-          { id: 1, question: "What is your mother's maiden name?" },
-          { id: 2, question: "What was the name of your first pet?" },
-          { id: 3, question: "What is your favorite book?" },
-          { id: 4, question: "What city were you born in?" },
-        ]);
-      }
-    };
-    fetchQuestions();
-  }, []);
 
   const validateField = (field, value) => {
     const newErrors = { ...errors };
@@ -111,74 +80,31 @@ export default function Register({ toggleTheme, mode }) {
     setErrors(newErrors);
   };
 
-  const validateSecurityQuestion = (index, field, value) => {
-    const newErrors = { ...errors };
-
-    if (field === 'questionId') {
-      if (!value.trim()) {
-        newErrors[`securityQuestion${index}`] = `Security Question ${index + 1} is required`;
-      } else {
-        delete newErrors[`securityQuestion${index}`];
-      }
-    }
-
-    if (field === 'answer') {
-      if (!value.trim()) {
-        newErrors[`securityAnswer${index}`] = `Answer for Security Question ${index + 1} is required`;
-      } else {
-        delete newErrors[`securityAnswer${index}`];
-      }
-    }
-
-    setErrors(newErrors);
-  };
-
   const handleRegister = async () => {
-  // Check if at least one valid security question is selected
-  const validQuestions = form.securityAnswers.filter(
-    (q) => q.questionId && q.answer.trim()
-  );
-  if (validQuestions.length === 0) {
-    alert('You must select at least one security question and provide an answer.');
-    return;
-  }
-
-  try {
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, form);
-    alert('Registered! Now log in.');
-    router.push('/login');
-  } catch (error) {
-    console.error('Registration failed:', error);
-    setErrorMessage('Registration failed. Please try again.');
-  }
-};
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, form);
+      alert('Registered! Now log in.');
+      router.push('/login');
+    } catch (error) {
+      console.error('Registration failed:', error);
+      setErrorMessage('Registration failed. Please try again.');
+    }
+  };
 
   const handleFieldChange = (field, value) => {
     setForm({ ...form, [field]: value });
     validateField(field, value);
   };
 
-  const handleSecurityQuestionChange = (index, field, value) => {
-    const updatedQuestions = [...form.securityAnswers];
-    updatedQuestions[index][field] = value;
-    setForm({ ...form, securityAnswers: updatedQuestions });
-    validateSecurityQuestion(index, field, value);
-  };
-
-  const addSecurityQuestion = () => {
-    if (form.securityAnswers.length >= 2) {
-      alert('You can only select up to 2 security questions.');
-      return;
-    }
-    setForm({
-      ...form,
-      securityAnswers: [...form.securityAnswers, { questionId: '', answer: '' }],
-    });
-  };
-
-  const removeSecurityQuestion = (index) => {
-    const updatedQuestions = form.securityAnswers.filter((_, i) => i !== index);
-    setForm({ ...form, securityAnswers: updatedQuestions });
+  const isFormValid = () => {
+    return (
+      form.username.trim() &&
+      form.password.trim() &&
+      form.email.trim() &&
+      form.phone.trim() &&
+      form.address.trim() &&
+      Object.keys(errors).length === 0
+    );
   };
 
   return (
@@ -270,71 +196,12 @@ export default function Register({ toggleTheme, mode }) {
               error={!!errors.address}
               helperText={errors.address}
             />
-            {form.securityAnswers.map((q, index) => (
-              <Box key={index} sx={{ mt: 2 }}>
-                <TextField
-                  select
-                  margin="normal"
-                  required
-                  fullWidth
-                  label={`Security Question ${index + 1}`}
-                  value={q.questionId}
-                  onChange={(e) =>
-                    handleSecurityQuestionChange(index, 'questionId', e.target.value)
-                  }
-                  SelectProps={{
-                    native: true,
-                  }}
-                  InputLabelProps={{
-                    shrink: true, // Ensures the label does not overlap
-                  }}
-                >
-                  <option value="" disabled>
-                    Select a question
-                  </option>
-                  {questions.map((question) => (
-                    <option key={question.id} value={question.id}>
-                      {question.question}
-                    </option>
-                  ))}
-                </TextField>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  label="Answer"
-                  value={q.answer}
-                  onChange={(e) =>
-                    handleSecurityQuestionChange(index, 'answer', e.target.value)
-                  }
-                  error={!!errors[`securityAnswer${index}`]}
-                  helperText={errors[`securityAnswer${index}`]}
-                />
-                <Button
-                  variant="text"
-                  size="small"
-                  color="error"
-                  onClick={() => removeSecurityQuestion(index)}
-                  sx={{ mt: 1 }}
-                >
-                  Remove
-                </Button>
-              </Box>
-            ))}
-            <Button
-              variant="text"
-              size="small"
-              onClick={addSecurityQuestion}
-              sx={{ mt: 2 }}
-            >
-              Add Another Security Question
-            </Button>
             <Button
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
               onClick={handleRegister}
-              disabled={form.securityAnswers.length === 0 || form.securityAnswers.some((q) => !q.questionId || !q.answer.trim())}
+              disabled={!isFormValid()}
             >
               Register
             </Button>
