@@ -66,7 +66,7 @@ router.post('/login', async (req, res) => {
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  const token = jwt.sign({ username }, process.env.SECRET_KEY || 'secret', { expiresIn: '1h' });
+  const token = jwt.sign({ username }, process.env.SECRET_KEY, { expiresIn: '1h' });
   res.json({ token });
 });
 
@@ -84,7 +84,7 @@ router.post('/forgot-password', async (req, res) => {
     const resetToken = jwt.sign({ username: user.username }, process.env.SECRET_KEY, {
       expiresIn: '15m', // Token expires in 15 minutes
     });
-
+    console.log('Generated reset token:', resetToken);
     // Construct the password reset link
     const resetLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/reset-password?token=${resetToken}`;
 
@@ -105,11 +105,12 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 router.post('/reset-password', async (req, res) => {
-  const { token, newPassword } = req.body;
-
+  const { token, password } = req.body;
+  console.log('Received token:', token);
   try {
     // Verify the reset token
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    console.log('Decoded token:', decoded);
 
     // Find the user by username
     const user = await User.findOne({ username: decoded.username });
@@ -118,7 +119,7 @@ router.post('/reset-password', async (req, res) => {
     }
 
     // Hash the new password
-    const hashedPassword = bcrypt.hashSync(newPassword, 8);
+    const hashedPassword = bcrypt.hashSync(password, 8);
 
     // Update the user's password
     user.password = hashedPassword;
