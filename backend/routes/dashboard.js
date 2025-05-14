@@ -68,4 +68,49 @@ router.get('/', isAdmin, async (req, res) => {
   }
 });
 
+router.get('/users', isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, '-password');
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/users/:id/role', isAdmin, async (req, res) => {
+  const { role } = req.body;
+  const { id } = req.params;
+
+  if (!role) {
+    return res.status(400).json({ error: 'Role is required' });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(id, { role }, { new: true });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: 'Role updated successfully', user });
+  } catch (err) {
+    console.error('Error updating user role:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/users/:id', isAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

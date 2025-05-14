@@ -14,12 +14,14 @@ import {
   TableContainer,
   TextField,
   Pagination,
+  Button,
 } from '@mui/material';
 
 export default function Dashboard() {
   const [trafficData, setTrafficData] = useState([]);
+  const [users, setUsers] = useState([]); // State for user data
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true); // Block rendering until both WebSocket and API are ready
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [method, setMethod] = useState('');
@@ -63,47 +65,114 @@ export default function Dashboard() {
     }
   };
 
+  const fetchUsers = async () => {
+    setError('');
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/dashboard/users`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 403) {
+          router.push('/403');
+        } else {
+          throw new Error('Failed to fetch users');
+        }
+      }
+
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error('Error fetching users:', err.message);
+      setError('Failed to fetch users');
+    }
+  };
+
+  const handleGrantAdmin = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/dashboard/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ role: 'admin' }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update user role');
+      }
+
+      await fetchUsers(); // Refresh user list
+    } catch (err) {
+      console.error('Error updating user role:', err.message);
+      setError('Failed to update user role');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/dashboard/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      await fetchUsers(); // Refresh user list
+    } catch (err) {
+      console.error('Error deleting user:', err.message);
+      setError('Failed to delete user');
+    }
+  };
+
   useEffect(() => {
     const initialize = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/login'); // Redirect to login if no token is found
+        router.push('/login');
         return;
       }
 
-      // Fetch initial logs
       await fetchLogs();
+      await fetchUsers();
 
-      // Establish WebSocket connection
       const ws = new WebSocket('ws://localhost:4000', token);
 
       ws.onopen = () => {
         console.log('WebSocket connection established');
-        setLoading(false); // Stop blocking rendering once WebSocket is ready
+        setLoading(false);
       };
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === 'update') {
-          setTrafficData((prevLogs) => [data.log, ...prevLogs]); // Add new log to the top
+          setTrafficData((prevLogs) => [data.log, ...prevLogs]);
         }
       };
 
       ws.onerror = (err) => {
         console.error('WebSocket error:', err);
         setError('Failed to connect to WebSocket server');
-        setLoading(false); // Stop blocking rendering even if WebSocket fails
+        setLoading(false);
       };
 
       ws.onclose = (event) => {
         console.log('WebSocket connection closed', event.code, event.reason);
         if (event.code === 1008) {
-          router.push('/403'); // Redirect to 403 page if unauthorized
+          router.push('/403');
         }
       };
 
       return () => {
-        ws.close(); // Clean up WebSocket connection on component unmount
+        ws.close();
       };
     };
 
@@ -115,7 +184,6 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    // Block rendering while waiting for WebSocket and API authorization
     return null;
   }
 
@@ -188,6 +256,56 @@ export default function Dashboard() {
             color="primary"
           />
         </>
+      )}
+
+      <Typography variant="h5" align="center" gutterBottom sx={{ mt: 5 }}>
+        User Management
+      </Typography>
+
+      {users.length === 0 ? (
+        <Typography align="center">No users available</Typography>
+      ) : (
+        <TableContainer component={Paper} sx={{ mb: 3 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Username</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user._id}>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      onClick={() => handleGrantAdmin(user._id)}
+                      disabled={user.role === 'admin'}
+                      sx={{ mr: 1 }}
+                    >
+                      Grant Admin
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="small"
+                      onClick={() => handleDeleteUser(user._id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
     </Container>
   );

@@ -21,7 +21,7 @@ app.use(cors({
   credentials: true, // Allow cookies and credentials
 }));
 
-mongoose.connect('mongodb://mongo:27017/extensionDB');
+mongoose.connect('mongodb://localhost:27017/extensionDB');
 
 app.use(express.json());
 app.use(helmet());
