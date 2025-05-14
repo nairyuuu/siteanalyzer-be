@@ -2,34 +2,59 @@ import { useState, useEffect } from 'react';
 import { Box, Typography, Container, Button, Link, AppBar, Toolbar, IconButton } from '@mui/material';
 import { Brightness4, Brightness7 } from '@mui/icons-material';
 import axios from 'axios';
-import { getToken, removeToken } from '../utils/auth'; // Utility functions for token management
+import { removeToken } from '../utils/auth';
 
 export default function Home({ toggleTheme, mode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track login status
 
   useEffect(() => {
-    const token = getToken();
-    if (token) {
-      setIsLoggedIn(true); // User is logged in if a token exists
-    }
+    const checkLoginStatus = async () => {
+      try {
+        // Check if the user is authenticated by making a request to a protected endpoint
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+        
+        await axios.get(`${apiUrl}/api/auth/check-auth`, { withCredentials: true });
+        setIsLoggedIn(true); // User is logged in if the request succeeds
+      } catch (error) {
+        setIsLoggedIn(false); // User is not logged in if the request fails
+      }
+    };
+
+    checkLoginStatus();
   }, []);
 
-  const handleLogout = () => {
-    removeToken(); // Remove the token from storage
-    setIsLoggedIn(false); // Update login status
-  };
+  const handleLogout = async () => {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    await axios.post(`${apiUrl}/api/auth/logout`, {}, { withCredentials: true });
+
+    // Remove the token from Local Storage
+    removeToken();
+
+    setIsLoggedIn(false);
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
 
   const downloadFile = async () => {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/download`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-      responseType: 'blob',
-    });
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'extension.zip');
-    document.body.appendChild(link);
-    link.click();
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await axios.get(`${apiUrl}/api/download`, {
+        withCredentials: true, // Ensure cookies are sent with the request
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'extension.zip');
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download the file. Please try again.');
+    }
   };
 
   return (

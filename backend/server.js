@@ -7,12 +7,13 @@ const { initializeWebSocket } = require('./utils/websocket');
 const rateLimiter = require('./utils/rateLimit');
 const helmet = require('helmet');
 const http = require('http');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const server = http.createServer(app);
 
 // Load the allowed origin from the environment variable
-const allowedOrigin = [`${process.env.NEXT_PUBLIC_FRONTEND_URL}`];
+const allowedOrigin = process.env.NEXT_PUBLIC_FRONTEND_URL
 
 // Configure CORS
 app.use(cors({
@@ -26,6 +27,7 @@ mongoose.connect('mongodb://localhost:27017/extensionDB');
 app.use(express.json());
 app.use(helmet());
 app.use(trafficLogger);
+app.use(cookieParser());
 
 app.use("/api", rateLimiter());
 app.use('/api/auth', require('./routes/auth'));
