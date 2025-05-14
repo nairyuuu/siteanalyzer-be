@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { getToken } from '../utils/auth';
+import apiClient from '../utils/apiClient';
 import {
   Box,
   Typography,
@@ -31,7 +33,6 @@ export default function Dashboard() {
   const router = useRouter();
 
   const fetchLogs = async () => {
-    setError('');
 
     try {
       const query = new URLSearchParams({
@@ -42,23 +43,10 @@ export default function Dashboard() {
         endpoint,
       }).toString();
 
-      const res = await fetch(`http://localhost:4000/api/dashboard?${query}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const res = await apiClient.get(`/api/dashboard?${query}`);
 
-      if (!res.ok) {
-        if (res.status === 403) {
-          router.push('/403');
-        } else {
-          throw new Error('Failed to fetch logs');
-        }
-      }
-
-      const data = await res.json();
-      setTrafficData(data.logs);
-      setPagination(data.pagination);
+      setTrafficData(res.data.logs);
+      setPagination(res.data.pagination);
     } catch (err) {
       console.error('Error fetching logs:', err.message);
       setError('Failed to fetch logs');
@@ -66,47 +54,31 @@ export default function Dashboard() {
   };
 
   const fetchUsers = async () => {
-    setError('');
+  try {
+    const res = await apiClient.get('/api/dashboard/users');
 
-    try {
-      const res = await fetch(`http://localhost:4000/api/dashboard/users`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!res.ok) {
-        if (res.status === 403) {
-          router.push('/403');
-        } else {
-          throw new Error('Failed to fetch users');
-        }
-      }
-
-      const data = await res.json();
-      setUsers(data);
-    } catch (err) {
-      console.error('Error fetching users:', err.message);
+    if (res.status === 200) {
+      setUsers(res.data);
+    } else {
       setError('Failed to fetch users');
     }
-  };
+  } catch (err) {
+    console.error('Error fetching users:', err.message);
+    setError('Failed to fetch users');
+  }
+};
 
   const handleGrantAdmin = async (userId) => {
-    try {
-      const res = await fetch(`http://localhost:4000/api/dashboard/users/${userId}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ role: 'admin' }),
-      });
+  try {
+    const res = await apiClient.put(`/api/dashboard/users/${userId}/role`, {
+      role: 'admin',
+    });
 
-      if (!res.ok) {
-        throw new Error('Failed to update user role');
-      }
+    if (res.status !== 200) {
+      throw new Error('Failed to update user role');
+    }
 
-      await fetchUsers(); // Refresh user list
+      await fetchUsers();
     } catch (err) {
       console.error('Error updating user role:', err.message);
       setError('Failed to update user role');
@@ -115,18 +87,13 @@ export default function Dashboard() {
 
   const handleDeleteUser = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/dashboard/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const res = await apiClient.delete(`/api/dashboard/users/${userId}`);
 
-      if (!res.ok) {
+      if (res.status !== 200) {
         throw new Error('Failed to delete user');
       }
 
-      await fetchUsers(); // Refresh user list
+      await fetchUsers();
     } catch (err) {
       console.error('Error deleting user:', err.message);
       setError('Failed to delete user');
@@ -135,16 +102,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     const initialize = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
 
       await fetchLogs();
       await fetchUsers();
 
-      const ws = new WebSocket('ws://localhost:4000', token);
+      const accessToken = getToken();
+      if (!accessToken) {
+        setError('No access token available');
+        return;
+      }
+
+      let ws = new WebSocket('ws://localhost:4000', accessToken);
+
+      if (!ws) {
+        setError('Failed to connect to WebSocket server');
+        return;
+      }
 
       ws.onopen = () => {
         console.log('WebSocket connection established');
@@ -161,13 +134,15 @@ export default function Dashboard() {
       ws.onerror = (err) => {
         console.error('WebSocket error:', err);
         setError('Failed to connect to WebSocket server');
-        setLoading(false);
       };
 
       ws.onclose = (event) => {
         console.log('WebSocket connection closed', event.code, event.reason);
         if (event.code === 1008) {
-          router.push('/403');
+          router.push('/403'); 
+        }
+        if (event.code === 4001) {
+          router.reload();
         }
       };
 
@@ -177,7 +152,7 @@ export default function Dashboard() {
     };
 
     initialize();
-  }, [router, page, limit, method, statusCode, endpoint]);
+  }, [page, limit, method, statusCode, endpoint]);
 
   const handlePageChange = (event, value) => {
     setPage(value);

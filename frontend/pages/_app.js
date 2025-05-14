@@ -35,7 +35,10 @@ function MyApp({ Component, pageProps }) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Component {...pageProps} toggleTheme={toggleTheme} mode={mode} />
+
+        <Component {...pageProps} toggleTheme={toggleTheme} mode={mode} />
+
+      
     </ThemeProvider>
   );
 }
