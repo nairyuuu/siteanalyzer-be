@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 
 // Load the allowed origin from the environment variable
-const allowedOrigin = [`${process.env.NEXT_PUBLIC_FRONTEND_URL}`];
+const allowedOrigin = [`${process.env.CORS_ORIGIN}`];
 
 // Configure CORS
 app.use(cors({
