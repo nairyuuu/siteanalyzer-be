@@ -4,31 +4,32 @@ const User = require('../models/user');
 const TrafficLog = require('../models/TrafficLog');
 const router = express.Router();
 
-// Middleware to check if the user is an admin
-const isAdmin = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
+const isAdmin = (req, res, next) => {
   try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.SECRET_KEY || 'secret');
-    const user = await User.findOne({ username: decoded.username });
+    const authHeader = req.headers['authorization'];
 
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ error: 'Access denied' });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided or invalid format' });
     }
 
-    req.user = user; // Attach the user object to the request for further use
+    const token = authHeader.split(' ')[1];
+
+    const decoded = jwt.verify(token, process.env.SECRET_KEY || 'secret');
+
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Admins only.' });
+    }
+
+    req.user = decoded;
     next();
   } catch (err) {
-    console.error('Error in isAdmin middleware:', err);
-    return res.status(401).json({ error: 'Invalid token' });
+    console.error('Error in isAdmin middleware:', err.message);
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
 
-router.get('/', isAdmin, async (req, res) => {
+
+router.get('/',isAdmin , async (req, res) => {
   try {
     // Extract query parameters for pagination and filtering
     const { page = 1, limit = 20, method, statusCode, endpoint } = req.query;
@@ -64,6 +65,51 @@ router.get('/', isAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Error in dashboard route:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/users', isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, '-password');
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/users/:id/role', isAdmin, async (req, res) => {
+  const { role } = req.body;
+  const { id } = req.params;
+
+  if (!role) {
+    return res.status(400).json({ error: 'Role is required' });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(id, { role }, { new: true });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: 'Role updated successfully', user });
+  } catch (err) {
+    console.error('Error updating user role:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/users/:id', isAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting user:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

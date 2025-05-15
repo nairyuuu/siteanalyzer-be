@@ -8,6 +8,7 @@ const nodemailer = require('nodemailer');
 const validator = require('validator'); // Add validator.js for input validation
 const securityQuestions = require('../middleware/data/securityQuestions')
 const router = express.Router(); 
+const redisClient = require('../utils/redisClient');
 
 
 const transporter = nodemailer.createTransport({
@@ -61,13 +62,62 @@ router.get('/security-questions', (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
+
+  console.log('Login Request Body:', req.body); // Log the request body
+
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
   const user = await User.findOne({ username });
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  const token = jwt.sign({ username }, process.env.SECRET_KEY, { expiresIn: '1h' });
-  res.json({ token });
+
+  // Generate access and refresh tokens
+  const accessToken = jwt.sign({ username: user.username, role: user.role }, process.env.SECRET_KEY || 'secret', { expiresIn: '15m' });
+  const refreshToken = jwt.sign({ username }, process.env.REFRESH_SECRET_KEY || 'secret', { expiresIn: '7d' });
+
+  // Store the refresh token in Redis
+  await redisClient.set(refreshToken, username, { EX: 7 * 24 * 60 * 60 }); // Expire in 7 days
+
+  // Set the refresh token as an HttpOnly cookie
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Use Secure flag in production
+    sameSite: 'Strict', // Prevent CSRF
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  res.json({ accessToken });
+});
+
+router.post('/refresh-token', async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'No refresh token provided' });
+  }
+
+  try {
+    // Verify the refresh token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY || "secret" );
+
+    // Check if the refresh token exists in Redis
+    const username = await redisClient.get(refreshToken);
+    if (!username) {
+      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+
+    // Generate a new access token
+    const newAccessToken = jwt.sign({ username: decoded.username }, process.env.SECRET_KEY || "secret" , { expiresIn: '15m' });
+
+    res.json({ accessToken: newAccessToken });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid or expired refresh token' });
+  }
 });
 
 router.post('/forgot-password', async (req, res) => {
@@ -130,6 +180,31 @@ router.post('/reset-password', async (req, res) => {
     console.error('Error resetting password:', err);
     res.status(400).json({ error: 'Invalid or expired token.' });
   }
+});
+
+router.get('/check-auth', (req, res) => {
+  const token = req.cookies.refreshToken; // Read token from cookies
+  if (!token) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    jwt.verify(token, process.env.REFRESH_SECRET_KEY || 'secret');
+    res.json({ message: 'Authenticated' });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+  }
+});
+
+router.post('/logout', async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (refreshToken) {
+    await redisClient.del(refreshToken);
+  }
+
+  res.clearCookie('refreshToken');
+  res.json({ message: 'Logged out successfully' });
 });
 
 module.exports = router;

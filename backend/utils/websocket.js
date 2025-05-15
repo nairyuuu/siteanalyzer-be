@@ -35,8 +35,13 @@ function initializeWebSocket(server) {
         console.log('WebSocket connection closed');
       });
     } catch (err) {
-      console.error('WebSocket connection rejected: Invalid token', err.message);
-      ws.close(1008, 'Unauthorized'); 
+      if (err.name === 'TokenExpiredError') {
+        console.error('WebSocket connection rejected: Token expired');
+        ws.close(4001, 'Token expired'); // Custom close code for expired tokens
+      } else {
+        console.error('WebSocket connection rejected: Invalid token', err.message);
+        ws.close(1008, 'Unauthorized');
+      }
     }
   });
 }

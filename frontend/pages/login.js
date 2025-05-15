@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { setToken } from '../utils/auth';
 import { useRouter } from 'next/router';
+import { setToken } from '../utils/auth';
 import {
   Box,
   Button,
@@ -20,20 +20,22 @@ export default function Login({ toggleTheme, mode }) {
   const router = useRouter();
 
   const handleLogin = async () => {
-    try {
+  try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await axios.post(`${apiUrl}/api/auth/login`, form);
-      setToken(res.data.token);
-      router.push('/');
+      const response = await axios.post(
+        `${apiUrl}/api/auth/login`,
+        { username: form.username, password: form.password },
+        { withCredentials: true }
+      );
+
+      // Save the accessToken to Local Storage
+      setToken(response.data.accessToken);
+
+      // Redirect to the dashboard after successful login
+      router.push('/dashboard');
     } catch (error) {
       console.error('Login failed:', error);
       setErrorMessage(error.response?.data?.error || 'An error occurred. Please try again.');
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleLogin();
     }
   };
 
@@ -83,7 +85,6 @@ export default function Login({ toggleTheme, mode }) {
               autoFocus
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
-              onKeyPress={handleKeyPress}
             />
             <TextField
               margin="normal"
@@ -93,7 +94,6 @@ export default function Login({ toggleTheme, mode }) {
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              onKeyPress={handleKeyPress}
             />
             {errorMessage && (
               <Typography color="error" variant="body2" align="center" sx={{ mb: 2 }}>
