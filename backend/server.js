@@ -13,7 +13,7 @@ const app = express();
 const server = http.createServer(app);
 
 // Load the allowed origin from the environment variable
-const allowedOrigin = process.env.NEXT_PUBLIC_FRONTEND_URL
+const allowedOrigin = [`${process.env.CORS_ORIGIN}`];
 
 // Configure CORS
 app.use(cors({
@@ -22,7 +22,7 @@ app.use(cors({
   credentials: true, // Allow cookies and credentials
 }));
 
-mongoose.connect('mongodb://localhost:27017/extensionDB');
+mongoose.connect('mongodb://mongo:27017/extensionDB');
 
 app.use(express.json());
 app.use(helmet());
