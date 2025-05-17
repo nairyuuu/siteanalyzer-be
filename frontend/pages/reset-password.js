@@ -9,11 +9,28 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
+
+  const validatePassword = (value) => {
+    if (!value.trim()) {
+      return 'Password is required';
+    } else if (value.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    return '';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setError('');
+    const validationError = validatePassword(password);
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    } else {
+      setFormError('');
+    }
 
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
@@ -39,8 +56,10 @@ export default function ResetPassword() {
           margin="normal"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          error={!!formError}
+          helperText={formError}
         />
-        <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>
+        <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3 }} disabled={!!formError || !password}>
           Submit
         </Button>
       </form>
