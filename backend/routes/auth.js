@@ -67,6 +67,14 @@ router.post('/login', async (req, res) => {
 
   const { username, password } = req.body;
 
+  // Input validation
+  if (!validator.isAlphanumeric(username)) {
+    return res.status(400).json({ error: 'Invalid username. Only alphanumeric characters are allowed.' });
+  }
+  if (!validator.isLength(password || '', { min: 8 })) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+  }
+
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
   }
@@ -156,11 +164,16 @@ router.post('/forgot-password', async (req, res) => {
 
 router.post('/reset-password', async (req, res) => {
   const { token, password } = req.body;
+
+  // Input validation
+  if (!validator.isLength(password || '', { min: 8 })) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+  }
+
   console.log('Received token:', token);
   try {
     // Verify the reset token
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    console.log('Decoded token:', decoded);
 
     // Find the user by username
     const user = await User.findOne({ username: decoded.username });
