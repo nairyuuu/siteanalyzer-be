@@ -1,4 +1,5 @@
-const { WebSocketServer } = require('ws');
+const { 
+  Server } = require('ws');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const TrafficLog = require('../models/TrafficLog');
