@@ -112,12 +112,7 @@ export default function Dashboard() {
         return;
       }
 
-      // Use NEXT_PUBLIC_API_URL for WebSocket host
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      let wsHost = apiUrl.replace(/^http/, 'ws');
-      if (!wsHost.endsWith('/')) wsHost += '/';
-      wsHost = wsHost.replace(/\/$/, ''); // Remove trailing slash
-      let ws = new WebSocket(`${wsHost}`, accessToken);
+      let ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}`, accessToken);
 
       if (!ws) {
         setError('Failed to connect to WebSocket server');
