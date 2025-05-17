@@ -6,7 +6,7 @@ const TrafficLog = require('../models/TrafficLog');
 let wss; // WebSocket server instance
 
 function initializeWebSocket(server) {
-  wss = new WebSocketServer({ server });
+  wss = new WebSocketServer({ server, path: '/ws' });
 
   wss.on('connection', async (ws, req) => {
     const token = req.headers['sec-websocket-protocol'];
