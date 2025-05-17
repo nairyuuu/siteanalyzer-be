@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [statusCode, setStatusCode] = useState('');
   const [endpoint, setEndpoint] = useState('');
   const [pagination, setPagination] = useState({});
+  const [csrfToken, setCsrfToken] = useState('');
   const router = useRouter();
 
   const fetchLogs = async () => {
@@ -68,11 +69,26 @@ export default function Dashboard() {
   }
 };
 
+  const fetchCsrfToken = async () => {
+      try {
+        const res = await apiClient.get('/api/csrf-token');
+        setCsrfToken(res.data.csrfToken);
+      } catch (err) {
+        console.error('Failed to fetch CSRF token:', err);
+      }
+    };
+
   const handleGrantAdmin = async (userId) => {
   try {
-    const res = await apiClient.put(`/api/dashboard/users/${userId}/role`, {
-      role: 'admin',
-    });
+    const res = await apiClient.put(
+      `/api/dashboard/users/${userId}/role`,
+      { role: 'admin' },
+      {
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
+      }
+    );
 
     if (res.status !== 200) {
       throw new Error('Failed to update user role');
@@ -87,7 +103,14 @@ export default function Dashboard() {
 
   const handleDeleteUser = async (userId) => {
     try {
-      const res = await apiClient.delete(`/api/dashboard/users/${userId}`);
+      const res = await apiClient.delete(
+      `/api/dashboard/users/${userId}`,
+      {
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
+      }
+    );
 
       if (res.status !== 200) {
         throw new Error('Failed to delete user');
@@ -105,6 +128,7 @@ export default function Dashboard() {
 
       await fetchLogs();
       await fetchUsers();
+      await fetchCsrfToken();
 
       const accessToken = getToken();
       if (!accessToken) {

@@ -1,8 +1,11 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const csurf = require('csurf');
 const User = require('../models/user');
 const TrafficLog = require('../models/TrafficLog');
 const router = express.Router();
+
+const csrfProtection = csurf({ cookie: true });
 
 const isAdmin = (req, res, next) => {
   try {
@@ -79,7 +82,7 @@ router.get('/users', isAdmin, async (req, res) => {
   }
 });
 
-router.put('/users/:id/role', isAdmin, async (req, res) => {
+router.put('/users/:id/role', csrfProtection, isAdmin, async (req, res) => {
   const { role } = req.body;
   const { id } = req.params;
 
@@ -99,7 +102,7 @@ router.put('/users/:id/role', isAdmin, async (req, res) => {
   }
 });
 
-router.delete('/users/:id', isAdmin, async (req, res) => {
+router.delete('/users/:id', csrfProtection, isAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
