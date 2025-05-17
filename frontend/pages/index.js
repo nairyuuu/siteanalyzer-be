@@ -3,6 +3,7 @@ import { Box, Typography, Container, Button, Link, AppBar, Toolbar, IconButton }
 import { Brightness4, Brightness7 } from '@mui/icons-material';
 import axios from 'axios';
 import { removeToken } from '../utils/auth';
+import apiClient from '../utils/apiClient';
 
 export default function Home({ toggleTheme, mode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track login status
@@ -39,10 +40,8 @@ export default function Home({ toggleTheme, mode }) {
 };
 
   const downloadFile = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await axios.get(`${apiUrl}/api/download`, {
-        withCredentials: true, // Ensure cookies are sent with the request
+  try {
+      const res = await apiClient.get('/api/download', {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -52,8 +51,12 @@ export default function Home({ toggleTheme, mode }) {
       document.body.appendChild(link);
       link.click();
     } catch (error) {
+      if (error.response && error.response.status === 401) {
+        alert('You must be logged in to download the extension.');
+      } else {
+        alert('Failed to download the file. Please try again.');
+      }
       console.error('Download failed:', error);
-      alert('Failed to download the file. Please try again.');
     }
   };
 

@@ -73,7 +73,7 @@ async function downloadRepoZip() {
 }
 
 // Main route
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
     try {
         // Check and update the repository if needed
         await checkAndUpdateRepo();

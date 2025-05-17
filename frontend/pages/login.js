@@ -31,8 +31,7 @@ export default function Login({ toggleTheme, mode }) {
       // Save the accessToken to Local Storage
       setToken(response.data.accessToken);
 
-      // Redirect to the dashboard after successful login
-      router.push('/dashboard');
+      router.push('/');
     } catch (error) {
       console.error('Login failed:', error);
       setErrorMessage(error.response?.data?.error || 'An error occurred. Please try again.');
@@ -68,7 +67,7 @@ export default function Login({ toggleTheme, mode }) {
           color="text.secondary"
           sx={{ mt: 1, mb: 3 }}
         >
-          Analyze websites with ease. Login to access your dashboard.
+          Analyze websites with ease.
         </Typography>
 
         {/* Login Form */}
