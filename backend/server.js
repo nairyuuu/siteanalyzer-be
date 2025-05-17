@@ -8,6 +8,8 @@ const rateLimiter = require('./utils/rateLimit');
 const helmet = require('helmet');
 const http = require('http');
 const cookieParser = require('cookie-parser');
+const csurf = require('csurf');
+const csrfProtection = csurf({ cookie: true });
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +36,9 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/download', require('./routes/download'));
 app.use('/api/version', require('./routes/version'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.get('/api/csrf-token',csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 initializeWebSocket(server);
 
