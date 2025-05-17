@@ -14,13 +14,58 @@ import {
 } from '@mui/material';
 import { Brightness4, Brightness7 } from '@mui/icons-material';
 
+function isAlphanumeric(str) {
+  return /^[a-zA-Z0-9]+$/.test(str);
+}
+
 export default function Login({ toggleTheme, mode }) {
   const [form, setForm] = useState({ username: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const router = useRouter();
 
+  const validateField = (field, value) => {
+    let errors = { ...formErrors };
+    if (field === 'username') {
+      if (!value.trim()) {
+        errors.username = 'Username is required';
+      } else if (!isAlphanumeric(value)) {
+        errors.username = 'Username must be alphanumeric';
+      } else {
+        delete errors.username;
+      }
+    }
+    if (field === 'password') {
+      if (!value.trim()) {
+        errors.password = 'Password is required';
+      } else if (value.length < 8) {
+        errors.password = 'Password must be at least 8 characters';
+      } else {
+        delete errors.password;
+      }
+    }
+    setFormErrors(errors);
+  };
+
+  const handleFieldChange = (field, value) => {
+    setForm({ ...form, [field]: value });
+    validateField(field, value);
+  };
+
+  const isFormValid = () => {
+    return (
+      form.username.trim() &&
+      form.password.trim() &&
+      Object.keys(formErrors).length === 0
+    );
+  };
+
   const handleLogin = async () => {
-  try {
+    if (!isFormValid()) {
+      setErrorMessage('Please fix the errors before submitting.');
+      return;
+    }
+    try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const response = await axios.post(
         `${apiUrl}/api/auth/login`,
@@ -32,7 +77,7 @@ export default function Login({ toggleTheme, mode }) {
       setToken(response.data.accessToken);
 
       // Redirect to the dashboard after successful login
-      router.push('/dashboard');
+      router.push('/');
     } catch (error) {
       console.error('Login failed:', error);
       setErrorMessage(error.response?.data?.error || 'An error occurred. Please try again.');
@@ -84,7 +129,9 @@ export default function Login({ toggleTheme, mode }) {
               label="Username"
               autoFocus
               value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              onChange={(e) => handleFieldChange('username', e.target.value)}
+              error={!!formErrors.username}
+              helperText={formErrors.username}
             />
             <TextField
               margin="normal"
@@ -93,7 +140,9 @@ export default function Login({ toggleTheme, mode }) {
               label="Password"
               type="password"
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => handleFieldChange('password', e.target.value)}
+              error={!!formErrors.password}
+              helperText={formErrors.password}
             />
             {errorMessage && (
               <Typography color="error" variant="body2" align="center" sx={{ mb: 2 }}>
@@ -105,6 +154,7 @@ export default function Login({ toggleTheme, mode }) {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
               onClick={handleLogin}
+              disabled={!isFormValid()}
             >
               Login
             </Button>

@@ -1,18 +1,18 @@
 # Security Checklist
 
 ## 1. Password Security
-- [ ] Enforce a strong password policy:
+- [x] Enforce a strong password policy:
   - Minimum length of 8 characters.
   - Require uppercase, lowercase, numbers, and special characters.
-- [ ] Use `bcrypt` for secure password hashing with a sufficient work factor (e.g., 12).
-- [ ] Implement account lockout after multiple failed login attempts.
+- [x] Use `bcrypt` for secure password hashing with a sufficient work factor (e.g., 12).
+- [x] Implement account lockout after multiple failed login attempts.
 - [ ] Add CAPTCHA to prevent automated brute-force attacks.
-- [ ] Use secure, time-limited password reset tokens for password recovery.
+- [x] Use secure, time-limited password reset tokens for password recovery.
 
 ## 2. Access Token Security
-- [ ] Use signed JWTs with a strong secret key.
-- [ ] Validate tokens on every request.
-- [ ] Set short expiration times for access tokens and use refresh tokens for long-lived sessions.
+- [x] Use signed JWTs with a strong secret key.
+- [x] Validate tokens on every request.
+- [x] Set short expiration times for access tokens and use refresh tokens for long-lived sessions.
 - [ ] Implement CSRF protection using anti-CSRF tokens and `SameSite` cookies.
 - [ ] Use secure cookies (`HttpOnly`, `Secure`, `SameSite`) to prevent session hijacking.
 
@@ -24,7 +24,7 @@
 ## 4. Input Validation and Sanitization
 - [ ] Validate all user inputs against expected formats.
 - [ ] Sanitize inputs to remove or escape harmful characters.
-- [ ] Use parameterized queries to prevent SQL injection.
+- [ ] Use parameterized queries to prevent noSQL injection.
 - [ ] Validate and sanitize file paths to prevent path traversal attacks.
 - [ ] Restrict file uploads by type, size, and location.
 
@@ -33,13 +33,13 @@
 - [ ] Avoid exposing stack traces or detailed error messages in responses.
 
 ## 6. Network Security
-- [ ] Enforce HTTPS for all communication.
-- [ ] Redirect HTTP traffic to HTTPS.
-- [ ] Implement rate limiting and request throttling to mitigate DoS attacks.
-- [ ] Store sensitive values (e.g., API keys, database credentials) in environment variables or a secrets management tool.
+- [x] Enforce HTTPS for all communication. We config nginx to enforce https
+- [x] Redirect HTTP traffic to HTTPS. Configuring nginx
+- [x] Implement rate limiting and request throttling to mitigate DoS attacks. rateLimiting in server.js
+- [x] Store sensitive values (e.g., API keys, database credentials) in environment variables or a secrets management tool. The sensitive value is stored in .env file, for CI/CD, the credentials (ssh-key, ssh-user) is stored in github built-in credentials storing tools
 
 ## 7. Code and Application Security
-- [ ] Perform source code reviews using automated tools like SonarQube or RAF-Scanner.
+- [x] Perform source code reviews using automated tools like SonarQube. Used SonarQube got A in Security, Reliability, Maintainability
 - [ ] Conduct basic penetration testing using tools like ZAP Proxy, RAF DAS, or Nikto.
 
 ## 8. Advanced Security Measures
@@ -53,8 +53,8 @@
 - [ ] Secure the database by requiring authentication and restricting access to trusted IPs.
 
 ## 10. Logging and Monitoring
-- [ ] Enable logging for all critical actions and errors.
-- [ ] Monitor logs for suspicious activity.
+- [x] Enable logging for all critical actions and errors.
+- [x] Monitor logs for suspicious activity.
 - [ ] Set up alerts for potential security breaches.
 
 ## 11. Regular Updates and Patching
